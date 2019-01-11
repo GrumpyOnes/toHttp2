@@ -1,0 +1,98 @@
+#################Http2网站检测插件
+https://chrome.google.com/webstore/detail/http2-and-spdy-indicator/mpbpobfflnpcgagjijhmgnchggcjblin
+
+##############环境要求
+>nginx v1.10+
+openssl v1.0.2+
+http2仅支持https网站
+
+############升级openssl
+
+#检查oepnssl版本
+Openssl version
+>>OpenSSL 1.1.0f 低于1.0.2需升级
+#下载高版本
+wget https://www.openssl.org/source/openssl-1.1.0f.tar.gz
+tar xzf openssl.tar.gz
+cd openssl-1.1.0f
+./config --prefix=/usr/local/openssl
+#编译安装
+make && make install
+#rename旧版本
+mv /usr/bin/openssl  /usr/bin/openssl.old
+mv /usr/include/openssl /usr/include/openssl.old
+#创建新版本文件连接
+ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
+ln -s /usr/local/openssl/include/openssl /usr/include/openssl
+#链接新库文件
+ln -s /usr/local/openssl/lib/libssl.so /usr/local/lib64/libssl.so
+ln -s /usr/local/openssl/lib/libcrypto.so /usr/local/lib64/libcrypto.so
+
+
+##############创建证书文件
+
+nodejs搭建项目
+const http2 = require('spdy’);
+#加载证书文件
+var options = { 
+  key: fs.readFileSync('./server.key'), 
+  cert: fs.readFileSync('./server.crt') 
+}
+http.createServer(options,app)
+,listen(8080,()=>{
+ console.log(‘pls open https://localhost:8080’);
+});
+
+
+############################nginx安装
+wget http://nginx.org/download/nginx-1.10.3.tar.gz
+tar zxvf nginx-1.10.3.tar.gz
+./configure --prefix=/usr/local/nginx
+Make     //编译
+make install   //安装
+cd /usr/local/nginx/
+sbin/nginx    //启动
+
+sbin/nginx -V
+>>nginx version: nginx/1.10.3
+
+###########################nginx升级
+wget http://nginx.org/download/nginx-1.10.3.tar.gz
+tar zxvf nginx-1.10.3.tar.gz
+cd nginx-1.10.3
+#编译nginx，添加http_v2模块应用，新版编译命令如下
+./configure --prefix=/usr/local/nginx \
+--conf-path=/usr/local/nginx/conf/nginx.conf \
+--sbin-path=/usr/local/nginx/sbin/nginx \
+--pid-path=/usr/local/nginx/nginx.pid \
+--error-log-path=/var/log/nginx/nginx-error.log \
+--http-log-path=/var/log/nginx/nginx-access.log \
+--user=nginx \
+--group=nginx \
+--with-http_ssl_module \
+--with-http_realip_module \
+--with-http_flv_module \
+--with-http_mp4_module \
+--with-http_gunzip_module \
+--with-http_gzip_static_module \
+--with-http_secure_link_module \
+--with-http_v2_module \
+--with-http_stub_status_module \
+--with-http_sub_module \
+--with-openssl=/home/softwares/openssl-1.1.0f
+
+make
+//重命名旧版本
+mv /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx.old
+cp objs/nginx /usr/local/nginx/sbin/nginx
+make upgrade
+
+nginx -V
+
+修改ngnix.conf 
+listen 443 ssl http2;
+
+
+
+
+
